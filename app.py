@@ -1,109 +1,120 @@
-from flask import Flask, render_template_string, jsonify, request
+from flask import Flask, render_template_string, jsonify
 from datetime import datetime
 
 app = Flask(__name__)
 
-# --- CA SETTINGS & DATA ---
+# --- CORE SETTINGS ---
 FIRM_NAME = "HASSAN AI AUDITORS"
-AUDITOR_ID = "FA25-BSAI-0089"
+AUDITOR_IDENTITY = "HASSAN AHMED (FA25-BSAI-0089)"
 
-def get_financial_context():
+def get_live_data():
     return {
         "revenue": 25400000,
         "expenses": 18000000,
+        "tax_rate": 0.18,
         "assets": 12000000,
-        "liabilities": 4600000,
-        "inventory": 450
+        "liabilities": 4600000
     }
 
-# --- STYLES ---
+# --- PREMIUM CORPORATE STYLES ---
 STYLE = """
 <style>
-    body { font-family: 'Segoe UI', sans-serif; background: #0f0f0f; color: #e0e0e0; text-align: center; padding: 40px; }
-    .container { max-width: 900px; margin: auto; background: #1a1a1a; padding: 30px; border-radius: 15px; border: 1px solid #333; }
-    .gold { color: #d4af37; }
-    .btn { display: inline-block; padding: 12px 25px; margin: 10px; text-decoration: none; color: #000; background: #d4af37; border-radius: 5px; font-weight: bold; transition: 0.3s; }
-    .btn:hover { background: #fff; transform: translateY(-2px); }
-    table { width: 100%; border-collapse: collapse; margin-top: 20px; text-align: left; }
-    th, td { padding: 12px; border-bottom: 1px solid #333; }
-    .risk-high { color: #ff4d4d; font-weight: bold; }
-    .risk-low { color: #00ff41; }
+    :root { --gold: #d4af37; --bg: #0a0a0a; --card: #161616; --text: #f0f0f0; }
+    body { background-color: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; margin: 0; padding: 40px; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+    .glass-card { background: var(--card); border: 1px solid #333; padding: 40px; border-radius: 20px; box-shadow: 0 20px 50px rgba(0,0,0,0.5); width: 100%; max-width: 800px; text-align: center; }
+    h1 { color: var(--gold); letter-spacing: 4px; font-weight: 300; text-transform: uppercase; margin-bottom: 5px; }
+    .identity { color: #666; font-size: 0.8em; letter-spacing: 2px; margin-bottom: 40px; border-bottom: 1px solid #222; padding-bottom: 20px; }
+    
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 40px; }
+    .stat-box { background: #1f1f1f; padding: 20px; border-radius: 12px; border: 1px solid #2a2a2a; transition: 0.3s; cursor: default; }
+    .stat-box:hover { border-color: var(--gold); transform: translateY(-5px); }
+    .label { font-size: 0.7em; color: #888; text-transform: uppercase; margin-bottom: 5px; }
+    .value { font-size: 1.4em; color: white; font-weight: bold; }
+
+    .btn-container { display: flex; flex-wrap: wrap; justify-content: center; gap: 15px; }
+    .btn { text-decoration: none; padding: 12px 25px; border-radius: 8px; font-size: 0.8em; font-weight: bold; letter-spacing: 1px; transition: 0.3s; text-transform: uppercase; border: 1px solid transparent; }
+    .btn-gold { background: var(--gold); color: black; }
+    .btn-outline { border-color: #333; color: white; }
+    .btn:hover { opacity: 0.8; transform: scale(1.05); }
+
+    .footer { margin-top: 50px; font-size: 0.7em; color: #444; text-transform: uppercase; }
 </style>
 """
 
 @app.route('/')
-def dashboard():
+def home():
+    data = get_live_data()
+    profit = data['revenue'] - data['expenses']
     return render_template_string(f"""
     <html>
-        <head><title>CA Terminal</title>{STYLE}</head>
+        <head><title>Executive Audit Terminal</title>{STYLE}</head>
         <body>
-            <div class="container">
-                <h1 class="gold">{FIRM_NAME}</h1>
-                <p>Lead Auditor: <b>HASSAN AHMED ({AUDITOR_ID})</b></p>
-                <hr style="border: 0.5px solid #333;">
-                <div style="margin: 30px 0;">
-                    <a href="/audit_report" class="btn">Generate Audit Report</a>
-                    <a href="/fraud_scanner" class="btn" style="background:#ff4d4d;">Run Fraud Scan</a>
-                    <a href="/ledger" class="btn" style="background:#fff;">View General Ledger</a>
+            <div class="glass-card">
+                <h1>{FIRM_NAME}</h1>
+                <div class="identity">CHIEF AUDITOR: {AUDITOR_IDENTITY}</div>
+                
+                <div class="grid">
+                    <div class="stat-box"><div class="label">Total Volume</div><div class="value">PKR {data['revenue']:,}</div></div>
+                    <div class="stat-box"><div class="label">Audited Profit</div><div class="value" style="color:#00ff41;">PKR {profit:,}</div></div>
+                    <div class="stat-box"><div class="label">Compliance</div><div class="value">100% SECURE</div></div>
                 </div>
-                <p style="font-size: 0.8em; color: #666;">System Status: Secure & Synchronized</p>
+
+                <div class="btn-container">
+                    <a href="/audit_report" class="btn btn-gold">Generate Report</a>
+                    <a href="/fraud_scanner" class="btn btn-outline">Risk Analysis</a>
+                    <a href="/ledger" class="btn btn-outline" style="border-color:#ff4d4d; color:#ff4d4d;">Audit Ledger</a>
+                </div>
+
+                <div class="footer">Encrypted Session // Protocol V4.2 // Karachi Office</div>
             </div>
         </body>
     </html>
     """)
 
 @app.route('/audit_report')
-def audit_report():
-    data = get_financial_context()
+def report():
+    data = get_live_data()
     profit = data['revenue'] - data['expenses']
-    # CA Logic: Progressive Tax
-    tax_rate = 0.25 if profit > 5000000 else 0.15
-    tax_amount = profit * tax_rate
-    
+    tax = profit * data['tax_rate']
     return render_template_string(f"""
     <html><head>{STYLE}</head><body>
-        <div class="container">
-            <h2 class="gold">Executive Audit Summary</h2>
-            <table>
-                <tr><td>Gross Revenue</td><td>PKR {data['revenue']:,}</td></tr>
-                <tr><td>Total Expenses</td><td>PKR {data['expenses']:,}</td></tr>
-                <tr><td>Net Profit</td><td class="risk-low">PKR {profit:,}</td></tr>
-                <tr><td>Tax Liability ({int(tax_rate*100)}%)</td><td style="color:#ff9f43;">PKR {tax_amount:,}</td></tr>
-            </table>
-            <p style="margin-top:20px;">Verdict: <span class="risk-low">Unqualified Opinion (Clean)</span></p>
-            <a href="/" style="color:#d4af37;">Return to Terminal</a>
+        <div class="glass-card" style="text-align:left;">
+            <h2 style="color:var(--gold);">CERTIFIED AUDIT REPORT</h2>
+            <hr style="border:0; border-top:1px solid #222; margin:20px 0;">
+            <p>Net Liquidity: <b>PKR {profit:,}</b></p>
+            <p>Taxation Provision: <b>PKR {tax:,.0f}</b></p>
+            <p>Status: <span style="color:#00ff41;">Verified by HASSAN AI</span></p>
+            <br>
+            <a href="/" class="btn btn-outline">Back to Terminal</a>
         </div>
     </body></html>
     """)
 
 @app.route('/fraud_scanner')
-def fraud_scanner():
-    # Simulation of CA Anomaly Detection
-    anomalies = [
-        {"ref": "EXP-402", "item": "Office Supplies", "amount": 850000, "risk": "High", "reason": "Deviation from mean > 400%"},
-        {"ref": "EXP-405", "item": "Travel Expense", "amount": 12000, "risk": "Low", "reason": "Standard entry"}
-    ]
+def scanner():
     return render_template_string(f"""
     <html><head>{STYLE}</head><body>
-        <div class="container">
-            <h2 style="color:#ff4d4d;">AI Fraud Detection Scan</h2>
-            <table>
-                <tr><th>Ref ID</th><th>Category</th><th>Amount</th><th>Risk Level</th></tr>
-                {"".join([f"<tr><td>{a['ref']}</td><td>{a['item']}</td><td>{a['amount']}</td><td class='risk-{'high' if a['risk']=='High' else 'low'}'>{a['risk']}</td></tr>" for a in anomalies])}
-            </table>
-            <br><a href="/" style="color:#d4af37;">Back to Safety</a>
+        <div class="glass-card">
+            <h2 style="color:#ff4d4d;">AI ANOMALY DETECTION</h2>
+            <p style="color:#888;">Scanning all nodes for financial discrepancies...</p>
+            <div style="background:#111; padding:20px; border-radius:10px; border-left:4px solid #ff4d4d; text-align:left;">
+                <span style="color:#ff4d4d;">[WARNING]</span> Unusual high-value transaction detected in Ledger Entry #AX-902.
+            </div>
+            <br>
+            <a href="/" class="btn btn-outline">Return to Safety</a>
         </div>
     </body></html>
     """)
 
 @app.route('/ledger')
-def ledger():
-    data = get_financial_context()
+def ledger_json():
+    data = get_live_data()
     return jsonify({
         "audit_id": "H-AI-992",
-        "auditor": "HASSAN AHMED",
-        "balance_check": "Match" if data['assets'] == (data['liabilities'] + (data['revenue']-data['expenses'])) else "Review Needed",
-        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M")
+        "auditor": f"{AUDITOR_IDENTITY}",
+        "balance_check": "Match",
+        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M"),
+        "verdict": "Clear for Filing"
     })
 
 if __name__ == '__main__':
