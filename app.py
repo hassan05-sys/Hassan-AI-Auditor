@@ -1,43 +1,82 @@
-from flask import Flask, jsonify
-import sqlite3
+from flask import Flask, jsonify, request
+from datetime import datetime
 
 app = Flask(__name__)
 
+# --- CA CORE LOGIC (The Brain) ---
+
+class CAAICore:
+    def __init__(self):
+        self.revenue = 25400000
+        self.expenses = 18000000
+        self.tax_rate = 0.18 # 18% GST/Sales Tax
+        
+    def calculate_audit(self):
+        gross_profit = self.revenue - self.expenses
+        tax_payable = gross_profit * self.tax_rate
+        net_income = gross_profit - tax_payable
+        
+        # CA Insight: Identifying efficiency
+        efficiency_ratio = (self.expenses / self.revenue) * 100
+        
+        return {
+            "financial_summary": {
+                "gross_revenue": self.revenue,
+                "total_expenses": self.expenses,
+                "tax_liability": tax_payable,
+                "net_profit": net_income
+            },
+            "ca_metrics": {
+                "profit_margin": f"{((gross_profit/self.revenue)*100):.2f}%",
+                "efficiency_ratio": f"{efficiency_ratio:.2f}%",
+                "status": "Balanced" if self.revenue > self.expenses else "Deficit"
+            }
+        }
+
+ca_engine = CAAICore()
+
+# --- ROUTES (The Functions) ---
+
 @app.route('/')
-def home():
-    return f"""
-    <html>
-        <body style="font-family: Arial; text-align: center; background-color: #f4f4f4; padding: 50px;">
-            <h1 style="color: #2c3e50;">HASSAN AI AUDITOR - Dashboard</h1>
-            <p>Welcome, <b>HASSAN AHMED (FA25-BSAI-0089)</b></p>
-            <hr style="width: 50%;">
-            <div style="margin-top: 20px;">
-                <a href="/inventory_audit" style="padding: 10px 20px; background: #27ae60; color: white; text-decoration: none; border-radius: 5px; margin: 5px;">Check Inventory</a>
-                <a href="/tax_audit" style="padding: 10px 20px; background: #2980b9; color: white; text-decoration: none; border-radius: 5px; margin: 5px;">Tax Report</a>
-                <a href="/fraud_check" style="padding: 10px 20px; background: #e74c3c; color: white; text-decoration: none; border-radius: 5px; margin: 5px;">Fraud Scanner</a>
-            </div>
-        </body>
-    </html>
-    """
+def health_check():
+    return {
+        "system": "HASSAN AI CA-ENGINE",
+        "developer": "HASSAN AHMED (FA25-BSAI-0089)",
+        "status": "Operational",
+        "endpoints": ["/api/v1/full_audit", "/api/v1/tax_report", "/api/v1/ledger"]
+    }
 
-@app.route('/inventory_audit')
-def inventory_audit():
-    stock = [
-        {"item": "Handmade Rings", "quantity": 120, "unit_price": 500},
-        {"item": "Designer Watches", "quantity": 15, "unit_price": 12000}
+@app.route('/api/v1/full_audit')
+def full_audit():
+    # Simulated full business audit
+    report = ca_engine.calculate_audit()
+    return jsonify({
+        "timestamp": datetime.now().isoformat(),
+        "auditor": "HASSAN AHMED",
+        "data": report
+    })
+
+@app.route('/api/v1/tax_report')
+def tax_report():
+    # Focused on Tax Compliance
+    data = ca_engine.calculate_audit()
+    tax_info = {
+        "tax_payable": data['financial_summary']['tax_liability'],
+        "tax_period": "Q1 2026",
+        "compliance_status": "Verified",
+        "ca_recommendation": "Maintain 18% reserve for FBR compliance."
+    }
+    return jsonify(tax_info)
+
+@app.route('/api/v1/ledger')
+def ledger():
+    # Simulated entries like a real CA ledger
+    entries = [
+        {"id": 1, "desc": "Operational Cost", "debit": 50000, "credit": 0},
+        {"id": 2, "desc": "Client Payment", "debit": 0, "credit": 120000},
+        {"id": 3, "desc": "Tax Filing Fee", "debit": 15000, "credit": 0}
     ]
-    total_value = sum(item['quantity'] * item['unit_price'] for item in stock)
-    return jsonify({"developer": "HASSAN AHMED", "total_valuation": total_value, "data": stock})
-
-@app.route('/tax_audit')
-def tax_audit():
-    revenue = 2500000
-    tax = revenue * 0.18
-    return jsonify({"developer": "HASSAN AHMED", "gross_revenue": revenue, "gst_payable_18pc": tax})
-
-@app.route('/fraud_check')
-def fraud_check():
-    return jsonify({"status": "Safe", "alerts": 0, "auditor": "HASSAN AHMED"})
+    return jsonify({"ledger_entries": entries, "auditor_signoff": "HASSAN AHMED"})
 
 if __name__ == '__main__':
     app.run(debug=True)
