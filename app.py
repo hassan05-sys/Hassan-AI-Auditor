@@ -1,87 +1,78 @@
-from flask import Flask, render_template_string, jsonify
+from flask import Flask, jsonify, render_template_string
 from datetime import datetime
 
 app = Flask(__name__)
 
-# --- CA CORE LOGIC ---
-def get_audit_data():
-    return {
-        "revenue": 25400000,
-        "expenses": 18000000,
-        "tax_rate": 0.18,
-        "inventory_count": 450
-    }
+# --- ADVANCED CA LOGIC MODULE ---
+class ProfessionalAuditor:
+    def __init__(self, revenue, expenses):
+        self.revenue = revenue
+        self.expenses = expenses
+        self.audit_id = "AUD-2026-001"
 
-# --- STYLES (Temporary for testing logic) ---
-STYLE = """
-<style>
-    body { font-family: sans-serif; padding: 50px; text-align: center; background: #f4f4f4; }
-    .card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); display: inline-block; min-width: 300px; }
-    .btn { display: inline-block; padding: 10px 20px; margin: 10px; text-decoration: none; color: white; border-radius: 5px; }
-    .bg-green { background: #28a745; }
-    .bg-blue { background: #007bff; }
-    .bg-red { background: #dc3545; }
-</style>
-"""
+    def get_tax_bracket(self, profit):
+        # Professional Tax Logic: 15% for < 5M, 25% for > 5M
+        return 0.15 if profit < 5000000 else 0.25
+
+    def generate_ca_summary(self):
+        gross_profit = self.revenue - self.expenses
+        rate = self.get_tax_bracket(gross_profit)
+        tax_amount = gross_profit * rate
+        
+        return {
+            "auditor_signature": "HASSAN AHMED (FA25-BSAI-0089)",
+            "verification_time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "core_financials": {
+                "total_revenue": self.revenue,
+                "total_deductions": self.expenses,
+                "taxable_income": gross_profit,
+                "applied_tax_rate": f"{rate*100}%",
+                "net_payable_tax": tax_amount
+            },
+            "ca_health_check": {
+                "profit_margin": f"{(gross_profit/self.revenue)*100:.2f}%",
+                "liquidity_status": "Highly Liquid" if gross_profit > 1000000 else "Critical",
+                "audit_verdict": "UNQUALIFIED OPINION (Clean Record)"
+            }
+        }
+
+# Initialize with sample data
+ca_system = ProfessionalAuditor(revenue=25400000, expenses=18000000)
+
+# --- ROUTES ---
 
 @app.route('/')
-def dashboard():
-    return render_template_string(f"""
-    <html>
-        <head>{STYLE}</head>
-        <body>
-            <div class="card">
-                <h1>HASSAN AI AUDITOR - Dashboard</h1>
-                <p>Welcome, <b>HASSAN AHMED (FA25-BSAI-0089)</b></p>
-                <hr>
-                <a href="/inventory_audit" class="btn bg-green">Check Inventory</a>
-                <a href="/tax_audit" class="btn bg-blue">Tax Report</a>
-                <a href="/ledger" class="btn bg-red">Ledger Audit</a>
+def home():
+    # Simple UI to link all CA endpoints
+    return render_template_string("""
+        <body style="font-family: Arial; text-align: center; padding-top: 50px; background: #f9f9f9;">
+            <h1>HASSAN AI - CA CORE ENGINE</h1>
+            <p>Status: <span style="color: green;"><b>OPERATIONAL</b></span></p>
+            <div style="margin-top: 30px;">
+                <a href="/api/v1/full_audit" style="padding: 10px; background: #333; color: white; text-decoration: none; border-radius: 5px;">View Detailed Audit</a>
+                <a href="/api/v1/ledger" style="padding: 10px; background: #d4af37; color: black; text-decoration: none; border-radius: 5px;">View General Ledger</a>
             </div>
+            <p style="margin-top: 50px; color: #888;">Developer: HASSAN AHMED (FA25-BSAI-0089)</p>
         </body>
-    </html>
     """)
 
-@app.route('/inventory_audit')
-def inventory_audit():
-    data = get_audit_data()
-    return render_template_string(f"""
-    <html><head>{STYLE}</head><body>
-        <div class="card">
-            <h2>Inventory Status</h2>
-            <p>Total Items in Stock: <b>{data['inventory_count']}</b></p>
-            <p>Verification Status: <span style="color:green">Verified</span></p>
-            <a href="/">Back to Dashboard</a>
-        </div>
-    </body></html>
-    """)
+@app.route('/api/v1/full_audit')
+def full_audit():
+    return jsonify(ca_system.generate_ca_summary())
 
-@app.route('/tax_audit')
-def tax_audit():
-    data = get_audit_data()
-    profit = data['revenue'] - data['expenses']
-    tax = profit * data['tax_rate']
-    return render_template_string(f"""
-    <html><head>{STYLE}</head><body>
-        <div class="card">
-            <h2>Tax Compliance Report</h2>
-            <p>Gross Profit: PKR {profit}</p>
-            <p>Tax Payable (18%): <b>PKR {tax}</b></p>
-            <p>Status: <span style="color:blue">Filing Ready</span></p>
-            <a href="/">Back to Dashboard</a>
-        </div>
-    </body></html>
-    """)
-
-@app.route('/ledger')
+@app.route('/api/v1/ledger')
 def ledger():
+    # Double-entry simulation
+    ledger_data = [
+        {"ref": "TR-001", "account": "Cash", "debit": 500000, "credit": 0},
+        {"ref": "TR-002", "account": "Accounts Payable", "debit": 0, "credit": 200000},
+        {"ref": "TR-003", "account": "Equity", "debit": 0, "credit": 300000}
+    ]
     return jsonify({
+        "ledger_name": "General Ledger 2026",
         "auditor": "HASSAN AHMED",
-        "entries": [
-            {"date": "2026-04-30", "type": "Credit", "amount": 120000, "note": "Client Payment"},
-            {"date": "2026-04-30", "type": "Debit", "amount": 50000, "note": "Operational Expense"}
-        ],
-        "status": "Balanced"
+        "entries": ledger_data,
+        "is_balanced": sum(x['debit'] for x in ledger_data) == sum(x['credit'] for x in ledger_data)
     })
 
 if __name__ == '__main__':
