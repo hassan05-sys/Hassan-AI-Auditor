@@ -1,63 +1,89 @@
-import os
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, jsonify, render_template
 import sqlite3
-import pandas as pd
+import os
 
 app = Flask(__name__)
-UPLOAD_FOLDER = 'uploads'
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
-if not os.path.exists(UPLOAD_FOLDER):
-    os.makedirs(UPLOAD_FOLDER)
-
-# --- DATABASE HELPER ---
-def query_db(query, args=(), one=False):
+# Database initialization
+def init_db():
     conn = sqlite3.connect('Audit_Master.db')
-    conn.row_factory = sqlite3.Row
-    cur = conn.cursor()
-    cur.execute(query, args)
-    rv = cur.fetchall()
+    cursor = conn.cursor()
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS audit_logs (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_name TEXT,
+            student_id TEXT,
+            activity TEXT,
+            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+    ''')
+    # Initial log entry for HASSAN AHMED
+    cursor.execute("INSERT INTO audit_logs (user_name, student_id, activity) VALUES (?, ?, ?)", 
+                   ('HASSAN AHMED', 'FA25-BSAI-0089', 'Server Started - Full Audit Suite'))
     conn.commit()
     conn.close()
-    return (rv[0] if rv else None) if one else rv
 
-# --- ROUTES ---
+# Initialize DB on start
+init_db()
+
 @app.route('/')
-def index():
-    # Dashboard stats nikalna
-    stats = {
-        "total_assets": 5000000,
-        "liabilities": 1200000,
-        "tax_due": 45000,
-        "risk": "Low"
-    }
-    return render_template('index.html', stats=stats)
+def home():
+    return jsonify({
+        "status": "Online",
+        "developer": "HASSAN AHMED",
+        "id": "FA25-BSAI-0089",
+        "university": "MAJU",
+        "message": "Welcome to HASSAN AI - The Future of Global Auditing",
+        "endpoints": {
+            "inventory": "/inventory_audit",
+            "tax": "/tax_audit",
+            "fraud_scanner": "/fraud_check"
+        }
+    })
 
-@app.route('/upload', methods=['POST'])
-def upload_file():
-    if 'file' not in request.files:
-        return jsonify({"error": "No file part"})
-    
-    file = request.files['file']
-    if file.filename == '':
-        return jsonify({"error": "No selected file"})
+@app.route('/inventory_audit')
+def inventory_audit():
+    # CA Module: Stock Valuation
+    stock = [
+        {"item": "Handmade Rings", "quantity": 120, "unit_price": 500},
+        {"item": "Designer Watches", "quantity": 15, "unit_price": 12000},
+        {"item": "Luxury Bracelets", "quantity": 45, "unit_price": 2500}
+    ]
+    total_value = sum(item['quantity'] * item['unit_price'] for item in stock)
+    return jsonify({
+        "module": "Inventory Auditor",
+        "total_valuation_pkr": total_value,
+        "items_scanned": len(stock),
+        "data": stock
+    })
 
-    path = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
-    file.save(path)
+@app.route('/tax_audit')
+def tax_audit():
+    # Tax Module: FBR Simulation (18% GST)
+    revenue = 2500000 # 25 Lakh
+    gst_rate = 0.18
+    tax_amount = revenue * gst_rate
+    return jsonify({
+        "module": "Tax Calculator",
+        "entity": "HASSAN AHMED (FA25-BSAI-0089)",
+        "gross_revenue": revenue,
+        "gst_payable_18pc": tax_amount,
+        "net_revenue": revenue - tax_amount
+    })
 
-    # AI EXTRACTION SIMULATION (CA Job #1: Bookkeeping)
-    # Asli AI yahan Invoice se Amount aur Vendor nikalega
-    sample_amount = 15000.0
-    vendor = "Hassan Supplies Co."
-    
-    conn = sqlite3.connect('Audit_Master.db')
-    cur = conn.cursor()
-    cur.execute("INSERT INTO ledger (date, account_name, category, debit, description) VALUES (?, ?, ?, ?, ?)",
-                ('2026-04-29', vendor, 'Purchase', sample_amount, 'Auto-extracted from ' + file.filename))
-    conn.commit()
-    conn.close()
-
-    return jsonify({"message": f"Success! AI extracted RS {sample_amount} from {file.filename} and updated Ledger."})
+@app.route('/fraud_check')
+def fraud_check():
+    # Security Module: Anomaly Detection
+    alerts = [
+        {"type": "Duplicate Payment", "amount": 45000, "status": "Flagged"},
+        {"type": "Suspicious Night Transfer", "amount": 120000, "status": "Pending Verification"}
+    ]
+    return jsonify({
+        "module": "AI Fraud Scanner",
+        "alerts_found": len(alerts),
+        "risk_score": "78/100",
+        "findings": alerts
+    })
 
 if __name__ == '__main__':
     app.run(debug=True)
